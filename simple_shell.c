@@ -8,35 +8,59 @@
 #include <string.h>
 
 #define DELIMS " \t\r\n"
-#define INITALBUFFER 1000
+#define INITALBUFFER 512
 
-void loop(void);
+void loop();
+char* readIn(void);
 int execute(char**);
 char** parseString(char*);
+int launch(char **args);
+int cd(char **args);
 
-void loop(void){
-  char* commandString = malloc(sizeof(char) * INITALBUFFER);
-  ssize_t init_buffsize = 0;
+void loop(){
 
-  char** tokens;
+  char *commandString;
+  char **tokens;
+  int status;
+
   do{
     printf("> ");
-    getline(&commandString,&init_buffsize,stdin);
+    commandString = readIn();
     tokens = parseString(commandString);
-    execute(tokens);
-    commandString = malloc(sizeof(char) * INITALBUFFER);
-  } while (1);
+    status = execute(tokens);
+  } while (status);
 }
 
-int execute(char** tokens){
-  pid_t pid;
+int execute(char** args){
+  int i;
 
-  if ((pid = fork()) == -1)
-     perror("fork error");
-  else if (pid == 0) {
-     execv("/bin/ls", tokens);
-     printf("Return not expected. Must be an execv error.n");
+  if(args[0] == NULL){
+    return 1;
   }
+
+  if(strcmp(args[0],"cd") == 0 || strcmp(args[0],"chdir") == 0) {
+    return cd(args);
+  }
+  // other stuff
+
+  return launch(args);
+}
+
+int launch(char **args){
+  pid_t pid;
+  int status;
+
+  pid = fork();
+  if(pid == 0){
+    if (execvp(args[0],args) == -1) {
+      perror("Error!");
+    }
+    exit(EXIT_FAILURE);
+  } else if (pid < 0){
+    perror("Fork Error!");
+  }
+
+  return 1;
 
 }
 
@@ -56,6 +80,7 @@ char** parseString(char* line){
       bufSize += INITALBUFFER;
       tokens = realloc(tokens,INITALBUFFER*sizeof(char*));
       if(!tokens){
+        fprintf(stderr, "Allocation Error\n");
         exit(1);
       }
     }
@@ -66,7 +91,53 @@ char** parseString(char* line){
   return tokens;
 }
 
-int main(){
+char* readIn(void){
+
+  char* buffer = malloc(sizeof(char) * INITALBUFFER);
+  int position = 0;
+  int commandString;
+  int bufferSize = INITALBUFFER;
+
+  if(!buffer) {
+    fprintf(stderr, "Allocation Error!\n" );
+    exit(EXIT_FAILURE);
+  }
+
+  while(1){
+    commandString = getchar();
+
+    if( commandString == EOF || commandString == '\n' ) {
+      buffer[position] = '\0';
+      return buffer;
+    } else {
+      buffer[position] = commandString;
+    }
+    ++position;
+
+    if (position >= bufferSize){
+      //add on 512 more
+      bufferSize += INITALBUFFER;
+      buffer = realloc(buffer,bufferSize);
+      if(!buffer){
+        fprintf(stderr, "Memory reallocation error!\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
+}
+
+int cd(char **args){
+  if(args[1] == NULL){
+    fprintf(stderr, "Need better argument to cd\n");
+  } else {
+    if (chdir(args[1]) != 0) {
+      perror("Error!");
+    }
+  }
+  return 1;
+}
+
+int main(int argc,char **argv){
   loop();
   return 0;
 }
