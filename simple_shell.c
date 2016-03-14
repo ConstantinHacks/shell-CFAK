@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "utils.h"
 
 #define DELIMS " \t\r\n"
 #define INITALBUFFER 512
@@ -14,8 +15,10 @@ void loop();
 char* readIn(void);
 int execute(char**);
 char** parseString(char*);
-int launch(char **args);
-int cd(char **args);
+int launch(char**);
+int shell_cd(char**);
+int shell_getenv(char**);
+int shell_setenv(char**);
 
 void loop(){
 
@@ -39,7 +42,13 @@ int execute(char** args){
   }
 
   if(strcmp(args[0],"cd") == 0 || strcmp(args[0],"chdir") == 0) {
-    return cd(args);
+    return shell_cd(args);
+  }
+  else if (strcmp(args[0],"setenv") == 0){
+    return shell_setenv(args);
+  }
+  else if (strcmp(args[0],"getenv") == 0){
+    return shell_getenv(args);
   }
   // other stuff
 
@@ -126,7 +135,7 @@ char* readIn(void){
   }
 }
 
-int cd(char **args){
+int shell_cd(char **args){
   if(args[1] == NULL){
     fprintf(stderr, "Need better argument to cd\n");
   } else {
@@ -135,6 +144,58 @@ int cd(char **args){
     }
   }
   return 1;
+}
+
+int shell_setenv(char **args){
+  //setenv MESSAGE="Hello, World"
+  //setenv MESSAGE="Hello,\ \"Constantin\".\ How" are you today?"
+
+  if(args[1] == NULL){
+    fprintf(stderr, "Need better argument to setenv\n");
+    return -1;
+  }
+  char* newStr;
+  int pathIndex = 0;
+  char* path;
+  int counter = 2;
+
+  strcpy(newStr,args[1]);
+  printf("%u\n",strlen(newStr));
+  for(int i=0; i < strlen(newStr);i++){
+    if(newStr[i] == '='){
+      pathIndex = i;
+    }
+  }
+  if(pathIndex == 0){
+    fprintf(stderr, "Need better argument to setenv\n");
+    return -1;
+  }
+
+  strncpy(path,newStr,pathIndex); // path
+  path[strlen(path)] = '\0'; // null terminate
+
+  //TODO errorcheck path
+
+  newStr += pathIndex+1; //chop off path and =
+
+  while(1){
+    printf("To concat:%s\n",args[counter]);
+    if(args[counter] == NULL){
+      break;
+    }
+    strcat(newStr,args[counter]);
+    counter++;
+  }
+  FILE errf;
+  printf("Unescape: %s\n",unescape(newStr,&errf));
+}
+
+int shell_getenv(char **args){
+  if(args[1] == NULL){
+    fprintf(stderr, "Need better argument to getenv\n");
+  } else {
+    //TODO
+  }
 }
 
 int main(int argc,char **argv){
