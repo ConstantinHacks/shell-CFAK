@@ -8,7 +8,7 @@
 #include <string.h>
 #include "utils.h"
 
-#define DELIMS " \t\r\n"
+#define DELIMS " \n"
 #define INITALBUFFER 512
 
 void loop();
@@ -19,6 +19,7 @@ int launch(char**);
 int shell_cd(char**);
 int shell_getenv(char**);
 int shell_setenv(char**);
+
 
 void loop(){
 
@@ -35,7 +36,6 @@ void loop(){
 }
 
 int execute(char** args){
-  int i;
 
   if(args[0] == NULL){
     return 1;
@@ -49,6 +49,20 @@ int execute(char** args){
   }
   else if (strcmp(args[0],"getenv") == 0){
     return shell_getenv(args);
+  }
+  else if (strcmp(args[0],"echo") == 0){
+    char* newStr = args[1];
+    int counter = 2;
+    while(1){
+      if(args[counter] == NULL){
+        break;
+      }
+      strcat(newStr,args[counter]);
+      strcat(newStr," ");
+      counter++;
+    }
+    printf("%s\n",unescape(newStr,stderr));
+    return 1;
   }
   // other stuff
 
@@ -93,8 +107,8 @@ char** parseString(char* line){
         exit(1);
       }
     }
-
     token = strtok_r(NULL,DELIMS,&save);
+    // printf("Token added: %s\n", token);
   }
   tokens[index] = NULL;
   return tokens;
@@ -179,22 +193,31 @@ int shell_setenv(char **args){
   newStr += pathIndex+1; //chop off path and =
 
   while(1){
-    printf("To concat:%s\n",args[counter]);
+    strcat(newStr," ");
     if(args[counter] == NULL){
       break;
     }
     strcat(newStr,args[counter]);
     counter++;
   }
-  FILE errf;
-  printf("Unescape: %s\n",unescape(newStr,&errf));
+  printf("Before Unescape: %s\n",newStr);
+  printf("Unescape: %s\n",unescape(newStr,stderr));
+  setenv(path,unescape(newStr,stderr),1);
+  return 1;
 }
 
 int shell_getenv(char **args){
   if(args[1] == NULL){
     fprintf(stderr, "Need better argument to getenv\n");
   } else {
-    //TODO
+    char* newStr;
+    int pathIndex = 0;
+    char* path = args[1];
+
+    strncpy(path,newStr,pathIndex); // path
+    path[strlen(path)] = '\0'; // null terminate
+    printf("%s\n",getenv(path));
+    return 1;
   }
 }
 

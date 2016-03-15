@@ -1,4 +1,4 @@
-SRCS = simple_shell.c
+SRCS = simple_shell.c utils.c
 OBJS = $(SRCS:.c=.o)
 BIN = simple_shell
 CFLAGS = -g
