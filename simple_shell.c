@@ -191,7 +191,6 @@ int shell_setenv(char **args){
   int counter = 2;
 
   strcpy(newStr,args[1]);
-  printf("%u\n",strlen(newStr));
   for(int i=0; i < strlen(newStr);i++){
     if(newStr[i] == '='){
       pathIndex = i;
@@ -217,8 +216,7 @@ int shell_setenv(char **args){
     strcat(newStr,args[counter]);
     counter++;
   }
-  printf("Before Unescape: %s\n",newStr);
-  printf("Unescape: %s\n",unescape(newStr,stderr));
+  printf("%s\n",unescape(newStr,stderr));
   setenv(path,unescape(newStr,stderr),1);
   return 1;
 }
@@ -233,7 +231,13 @@ int shell_getenv(char **args){
 
     strncpy(path,newStr,pathIndex); // path
     path[strlen(path)] = '\0'; // null terminate
-    printf("%s\n",getenv(path));
+    char* env = getenv(path);
+    if(!env){
+      fprintf(stderr, "%s is not a valid path\n",path);
+      printf("\n");
+      return 1;
+    }
+    printf("%s\n",env);
     return 1;
   }
 }
