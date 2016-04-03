@@ -32,7 +32,7 @@ void loop(){
     printf("> ");
     commandString = readIn();
     printf("First Char: %c\n",commandString[0]);
-    if (!strcmp(commandString[0],"#")){
+    if (strncmp(commandString,"#",1) == 0){
       printf("Comment, Ignore\n");
       status = 1;
     } else {
@@ -221,7 +221,7 @@ int shell_setenv(char **args){
     strcat(newStr,args[counter]);
     counter++;
   }
-  fprintf("%s\n",unescape(newStr,stderr));
+  printf("%s\n",unescape(newStr,stderr));
   setenv(path,unescape(newStr,stderr),1);
   return 1;
 }
@@ -242,7 +242,7 @@ int shell_getenv(char **args){
       printf("\n");
       return 1;
     }
-    fprintf("%s\n",env);
+    printf("%s\n",env);
     return 1;
   }
 }
