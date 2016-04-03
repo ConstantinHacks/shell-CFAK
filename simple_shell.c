@@ -7,14 +7,17 @@
 #include <unistd.h>
 #include <limits.h>
 #include <string.h>
+#include <sys/wait.h>
 #include "utils.h"
 
-#define DELIMS " \n"
+
+#define DELIMS " \n\r"
 #define INITALBUFFER 512
 
-void loop();
+void loop(FILE*);
+void runScript(FILE*,FILE*);
 char* readIn(void);
-int execute(char**);
+int execute(char**,FILE*);
 char** parseString(char*);
 int launch(char**);
 int shell_cd(char**);
@@ -22,27 +25,49 @@ int shell_getenv(char**);
 int shell_setenv(char**);
 
 
-void loop(){
+void runScript(FILE* scriptFile,FILE* historyFile){
+
+  char buf[INITALBUFFER];
+  char **tokens;
+
+
+  if(scriptFile){
+    while(fgets (buf,sizeof(buf),scriptFile)){
+      if (strncmp(buf,"#",1) == 0){
+        printf("Comment, Ignore\n");
+      } else {
+        tokens = parseString(buf);
+        execute(tokens,historyFile);
+      }
+    }
+  }
+
+}
+
+void loop(FILE* historyFile){
 
   char *commandString;
   char **tokens;
   int status;
 
+
   do{
     printf("> ");
     commandString = readIn();
-    printf("First Char: %c\n",commandString[0]);
+    fprintf(historyFile, "%s\n",commandString);
     if (strncmp(commandString,"#",1) == 0){
       printf("Comment, Ignore\n");
       status = 1;
     } else {
       tokens = parseString(commandString);
-      status = execute(tokens);
+      status = execute(tokens,historyFile);
     }
   } while (status);
 }
 
-int execute(char** args){
+int execute(char** args,FILE* fp){
+
+  // printf("Execute: %s\n",args[0]);
 
   if(args[0] == NULL){
     return 1;
@@ -72,11 +97,14 @@ int execute(char** args){
     return 1;
   }
   else if (strcmp(args[0],"exit") == 0){
-    int exit_code = atoi(args[1]);
-    if (args[1] == NULL){
+
+    if (!args[1]){
+      fclose(fp);
       exit(0);
     }
-    else if (exit_code >= 1 && exit_code <= 9){
+    int exit_code = atoi(args[1]);
+    if (exit_code >= 1 && exit_code <= 9){
+      fclose(fp);
       exit(exit_code);
     }
     else{
@@ -93,18 +121,19 @@ int launch(char **args){
   pid_t pid;
   int status;
 
+  // printf("launch %s\n", args[0]);
+
   pid = fork();
   if(pid == 0){
     if (execvp(args[0],args) == -1) {
-      perror("Error!");
+      perror("Launch Error");
     }
     exit(EXIT_FAILURE);
   } else if (pid < 0){
     perror("Fork Error!");
   }
-
+  waitpid(pid,NULL,0);
   return 1;
-
 }
 
 char** parseString(char* line){
@@ -128,7 +157,6 @@ char** parseString(char* line){
       }
     }
     token = strtok_r(NULL,DELIMS,&save);
-    // printf("Token added: %s\n", token);
   }
   tokens[index] = NULL;
   return tokens;
@@ -248,6 +276,29 @@ int shell_getenv(char **args){
 }
 
 int main(int argc,char **argv){
-  loop();
+
+  FILE* historyFile;
+  FILE* profileFile;
+  FILE* scriptFile;
+
+
+  historyFile = fopen(".421sh_history","a");
+  profileFile = fopen(".421sh_profile","r");
+
+  if(argc >= 2){
+    scriptFile = fopen(argv[1],"r");
+    if(!scriptFile){
+      fprintf(stderr, "File \"%s\" not found!\n",argv[1]);
+      exit(-1);
+    } else {
+      runScript(scriptFile,historyFile);
+    }
+  }
+
+  if(profileFile){
+    runScript(profileFile,historyFile);
+  }
+
+  loop(historyFile);
   return 0;
 }

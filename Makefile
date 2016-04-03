@@ -18,3 +18,4 @@ clean:
 	-rm -f $(OBJS)
 	-rm -f $(BIN)
 	-rm -f HelloWorld *.o
+	-rm -f .421sh_history
