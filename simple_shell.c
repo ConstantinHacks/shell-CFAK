@@ -31,8 +31,14 @@ void loop(){
   do{
     printf("> ");
     commandString = readIn();
-    tokens = parseString(commandString);
-    status = execute(tokens);
+    printf("First Char: %c\n",commandString[0]);
+    if (!strcmp(commandString[0],"#")){
+      printf("Comment, Ignore\n");
+      status = 1;
+    } else {
+      tokens = parseString(commandString);
+      status = execute(tokens);
+    }
   } while (status);
 }
 
@@ -142,7 +148,6 @@ char* readIn(void){
 
   while(1){
     commandString = getchar();
-
     if( commandString == EOF || commandString == '\n' ) {
       buffer[position] = '\0';
       return buffer;
@@ -216,7 +221,7 @@ int shell_setenv(char **args){
     strcat(newStr,args[counter]);
     counter++;
   }
-  printf("%s\n",unescape(newStr,stderr));
+  fprintf("%s\n",unescape(newStr,stderr));
   setenv(path,unescape(newStr,stderr),1);
   return 1;
 }
@@ -237,7 +242,7 @@ int shell_getenv(char **args){
       printf("\n");
       return 1;
     }
-    printf("%s\n",env);
+    fprintf("%s\n",env);
     return 1;
   }
 }
