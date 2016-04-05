@@ -1,31 +1,8 @@
 /*
-  Constantin Koehler Simple Shell
+  Constantin Koehler Simple Shell Implementation
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
-#include <string.h>
-#include <sys/wait.h>
-#include "utils.h"
-#include <ctype.h>
-
-
-
-#define DELIMS " \n\r"
-#define INITALBUFFER 512
-
-void loop(FILE*);
-void runScript(FILE*,FILE*);
-char* readIn(void);
-int execute(char**,FILE*);
-char** parseString(char*);
-int launch(char**);
-int shell_cd(char**);
-int shell_getenv(char**);
-int shell_setenv(char**);
-
+#include "simple_shell.h"
 
 void runScript(FILE* scriptFile,FILE* historyFile){
 
@@ -295,6 +272,7 @@ int main(int argc,char **argv){
   FILE* profileFile;
   FILE* scriptFile;
 
+  homedir = getpwuid(getuid())->pw_dir;
 
   historyFile = fopen(".421sh_history","a");
   profileFile = fopen(".421sh_profile","r");
