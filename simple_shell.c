@@ -9,6 +9,8 @@
 #include <string.h>
 #include <sys/wait.h>
 #include "utils.h"
+#include <ctype.h>
+
 
 
 #define DELIMS " \n\r"
@@ -50,7 +52,6 @@ void loop(FILE* historyFile){
   char **tokens;
   int status;
 
-
   do{
     printf("> ");
     commandString = readIn();
@@ -66,8 +67,6 @@ void loop(FILE* historyFile){
 }
 
 int execute(char** args,FILE* fp){
-
-  // printf("Execute: %s\n",args[0]);
 
   if(args[0] == NULL){
     return 1;
@@ -138,14 +137,26 @@ int launch(char **args){
 
 char** parseString(char* line){
   int index = 0;
+  int space = 0;
   int bufSize = INITALBUFFER;
-  char* token;
+  char token[INITALBUFFER];
   char* save;
   char** tokens = malloc(INITALBUFFER * sizeof(char*));
 
-  token = strtok_r(line,DELIMS,&save);
-  while(token != NULL){
-    tokens[index] = token;
+  // printf("In parseString, spaces: %d\n",count_spaces(line));
+
+  if(count_spaces(line) == 0){
+    tokens[index] = line;
+    tokens[index+1] = NULL;
+    return tokens;
+  }
+
+  do {
+    space = first_unquoted_space(line);
+    strncpy(token,line,space);
+    token[space] = '\0';
+    tokens[index] = unescape(token,stderr);
+    line += space+1;
     index++;
 
     if(index >= bufSize){
@@ -153,12 +164,15 @@ char** parseString(char* line){
       tokens = realloc(tokens,INITALBUFFER*sizeof(char*));
       if(!tokens){
         fprintf(stderr, "Allocation Error\n");
-        exit(1);
+        exit(EXIT_FAILURE);
       }
     }
-    token = strtok_r(NULL,DELIMS,&save);
-  }
+  } while(first_unquoted_space(line) != -1);
+
+  tokens[index++] = unescape(line,stderr);
+
   tokens[index] = NULL;
+
   return tokens;
 }
 
@@ -292,6 +306,7 @@ int main(int argc,char **argv){
       exit(-1);
     } else {
       runScript(scriptFile,historyFile);
+      exit(0);
     }
   }
 
