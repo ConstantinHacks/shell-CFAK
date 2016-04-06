@@ -13,7 +13,7 @@ void runScript(FILE* scriptFile,FILE* historyFile){
   if(scriptFile){
     while(fgets (buf,sizeof(buf),scriptFile)){
       if (strncmp(buf,"#",1) == 0){
-        printf("Comment, Ignore\n");
+        // printf("Comment, Ignore\n");
       } else {
         tokens = parseString(buf);
         execute(tokens,historyFile);
@@ -48,6 +48,8 @@ int execute(char** args,FILE* fp){
   if(args[0] == NULL){
     return 1;
   }
+
+  // printf("Execute: %s",args[0]);
 
   if(strcmp(args[0],"cd") == 0 || strcmp(args[0],"chdir") == 0) {
     return shell_cd(args);
@@ -271,14 +273,24 @@ int main(int argc,char **argv){
   FILE* historyFile;
   FILE* profileFile;
   FILE* scriptFile;
+  char* homedir;
+  char* profileDir;
+  char* scriptDir;
 
   homedir = getpwuid(getuid())->pw_dir;
 
+  strcat(homedir,"/");
+  strcpy(profileDir,homedir);
+
+  strcat(profileDir,".421sh_profile");
+
   historyFile = fopen(".421sh_history","a");
-  profileFile = fopen(".421sh_profile","r");
+  profileFile = fopen(profileDir,"r");
 
   if(argc >= 2){
-    scriptFile = fopen(argv[1],"r");
+    strcpy(scriptDir,homedir);
+    strcat(scriptDir,argv[1]);
+    scriptFile = fopen(scriptDir,"r");
     if(!scriptFile){
       fprintf(stderr, "File \"%s\" not found!\n",argv[1]);
       exit(-1);
