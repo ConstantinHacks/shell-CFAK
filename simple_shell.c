@@ -9,7 +9,6 @@ void runScript(FILE* scriptFile,FILE* historyFile){
   char buf[INITALBUFFER];
   char **tokens;
 
-
   if(scriptFile){
     while(fgets (buf,sizeof(buf),scriptFile)){
       if (strncmp(buf,"#",1) == 0){
@@ -250,22 +249,21 @@ int shell_setenv(char **args){
 int shell_getenv(char **args){
   if(args[1] == NULL){
     fprintf(stderr, "Need better argument to getenv\n");
-  } else {
-    char* newStr;
-    int pathIndex = 0;
-    char* path = args[1];
+  }
+  char* newStr;
+  int pathIndex = 0;
+  char* path = args[1];
 
-    strncpy(path,newStr,pathIndex); // path
-    path[strlen(path)] = '\0'; // null terminate
-    char* env = getenv(path);
-    if(!env){
-      fprintf(stderr, "%s is not a valid path\n",path);
-      printf("\n");
-      return 1;
-    }
-    printf("%s\n",env);
+  strncpy(path,newStr,pathIndex); // path
+  path[strlen(path)] = '\0'; // null terminate
+  char* env = getenv(path);
+  if(!env){
+    fprintf(stderr, "%s is not a valid path\n",path);
+    printf("\n");
     return 1;
   }
+  printf("%s\n",env);
+  return 1;
 }
 
 int main(int argc,char **argv){
@@ -280,12 +278,12 @@ int main(int argc,char **argv){
   homedir = getpwuid(getuid())->pw_dir;
 
   strcat(homedir,"/");
-  strcpy(profileDir,homedir);
-
+  profileDir = homedir;
   strcat(profileDir,".421sh_profile");
-
   historyFile = fopen(".421sh_history","a");
   profileFile = fopen(profileDir,"r");
+
+
 
   if(argc >= 2){
     strcpy(scriptDir,homedir);
@@ -303,7 +301,6 @@ int main(int argc,char **argv){
   if(profileFile){
     runScript(profileFile,historyFile);
   }
-
   loop(historyFile);
   return 0;
 }
