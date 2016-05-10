@@ -43,6 +43,8 @@ void loop(FILE* historyFile){
 }
 
 int execute(char** args,FILE* fp){
+  int lastArg,lastLetter;
+  int flag = 0;
 
   if(args[0] == NULL){
     return 1;
@@ -89,12 +91,28 @@ int execute(char** args,FILE* fp){
       return 1;
     }
   }
-  // other stuff
 
-  return launch(args);
+
+  for (lastArg = 0;args[lastArg] != NULL; lastArg++){
+    // printf("Count: %d\n",lastArg);
+  }
+  lastArg--;
+
+  for (lastLetter = 0; args[lastArg][lastLetter] != '\0';lastLetter++){
+    // printf("Letter: %c\n",args[lastArg][lastLetter]);
+  }
+  lastLetter--;
+
+  if(args[lastArg][lastLetter] == '&'){
+    // printf("Background!\n");
+    flag = 1;
+    args[lastArg] = NULL;
+  }
+
+  return launch(args,flag);
 }
 
-int launch(char **args){
+int launch(char **args,int flag){
   pid_t pid;
   int status;
 
@@ -109,7 +127,9 @@ int launch(char **args){
   } else if (pid < 0){
     perror("Fork Error!");
   }
-  waitpid(pid,NULL,0);
+  if(flag == 0)
+    waitpid(pid,NULL,0);
+
   return 1;
 }
 
@@ -282,8 +302,6 @@ int main(int argc,char **argv){
   strcat(profileDir,".421sh_profile");
   historyFile = fopen(".421sh_history","a");
   profileFile = fopen(profileDir,"r");
-
-
 
   if(argc >= 2){
     strcpy(scriptDir,homedir);

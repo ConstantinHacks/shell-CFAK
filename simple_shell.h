@@ -17,13 +17,13 @@
 
 #define DELIMS " \n\r"
 #define INITALBUFFER 512
-
+#define PATHMAX 1024
 void loop(FILE*);
 void runScript(FILE*,FILE*);
 char* readIn(void);
 int execute(char**,FILE*);
 char** parseString(char*);
-int launch(char**);
+int launch(char**,int);
 int shell_cd(char**);
 int shell_getenv(char**);
 int shell_setenv(char**);
